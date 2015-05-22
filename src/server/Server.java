@@ -36,7 +36,7 @@ public class Server  extends Thread
 		if (resumed)
 		{
 			ResultsParser rp = new ResultsParser(ServerSettings.Instance().ResultsFile);
-			games.removePlayedGames(rp);
+			previousScheduledGame = games.removePlayedGames(rp);
 		}
 		
         clients 	= new Vector<ServerClientThread>();
@@ -65,7 +65,7 @@ public class Server  extends Thread
 		
 		Game nextGame = games.getNextGame();
 		int iterations = 0;
-		
+
 		// keep trying to schedule games
 		while (true)
 		{
@@ -74,11 +74,6 @@ public class Server  extends Thread
 				// schedule a game once every few seconds
 				Thread.sleep(gameRescheduleTimer);
 				writeHTMLFiles("index.html", iterations++);
-				
-				if (!games.hasMoreGames())
-				{
-					log("No more games in games list, please shut down tournament!");
-				}
 				
 				String gameString = "Game(" + nextGame.getGameID() + " / " + nextGame.getRound() + ")";
 			
@@ -113,13 +108,27 @@ public class Server  extends Thread
 						ServerCommands.Server_MoveWriteToRead();
 					}
 				}
-						
-				log(gameString + " SUCCESS: Starting Game\n");
-				start1v1Game(nextGame);
-				
+
+				if((previousScheduledGame == null) || (previousScheduledGame.getGameID() != nextGame.getGameID()))
+				{
+					log(gameString + " SUCCESS: Starting Game\n");
+					start1v1Game(nextGame);
+				}
+				else if(free.size() < clients.size())
+				{
+					log("No more games in games list, waiting for current games to finish!\n");
+				}
+
 				if (games.hasMoreGames())
 				{
 					nextGame = games.getNextGame();
+				}
+
+				if((previousScheduledGame != null) &&
+						(previousScheduledGame.getGameID() == nextGame.getGameID()) &&
+						(free.size() == clients.size()) )
+				{
+					log("Tournament ended. You can now shut down this server.\n");
 				}
 			}
 			catch (Exception e)

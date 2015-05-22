@@ -21,21 +21,30 @@ public class GameStorage
 		allGames.add(game);
 	}
 	
-	public void removePlayedGames(ResultsParser rp)
+	public Game removePlayedGames(ResultsParser rp)
 	{
+		int maxId=-1;
+		Game lastGame = null;
 		Iterator<Game> it = allGames.iterator();
 		while (it.hasNext()) 
 		{
-		    if (rp.hasGameResult(it.next().getGameID())) 
+			Game g = it.next();
+		    if (rp.hasGameResult(g.getGameID()))
 		    {
+				if(g.getGameID() > maxId)
+				{
+					maxId = g.getGameID();
+					lastGame = g;
+				}
 		        it.remove();
 		    }
 		}
+		return lastGame;
 	}
 	
 	public boolean hasMoreGames()
 	{
-		return currentGameIndex < allGames.size() - 1;
+		return currentGameIndex < allGames.size();
 	}
 	
 	public Game getNextGame()
