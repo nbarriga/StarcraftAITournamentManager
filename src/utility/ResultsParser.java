@@ -34,8 +34,14 @@ public class ResultsParser
 	
 	private Vector<Vector<Integer>> winsAfterRound = new Vector<Vector<Integer>>();
 	private Vector<Vector<Integer>> gamesAfterRound = new Vector<Vector<Integer>>();
-	
+
+
 	public ResultsParser(String filename)
+	{
+		this(filename, true);
+	}
+
+	public ResultsParser(String filename, boolean perRoundAnalysis)
 	{
 		// set the bot names and map names
 		for (int i=0; i<botNames.length; ++i)
@@ -81,22 +87,29 @@ public class ResultsParser
 	{
 		return results.size();
 	}
-		
+
 	public void parseResults(Vector<GameResult> results)
 	{
-		for (int i=0; i<numBots; ++i)
+		parseResults(results, true);
+	}
+
+	public void parseResults(Vector<GameResult> results, boolean perRoundAnalysis)
+	{
+		if(perRoundAnalysis)
 		{
-			gamesAfterRound.add(new Vector<Integer>());
-			winsAfterRound.add(new Vector<Integer>());
-			
-			gamesAfterRound.get(i).add(0);
-			winsAfterRound.get(i).add(0);
+			for (int i = 0; i < numBots; ++i) {
+				gamesAfterRound.add(new Vector<Integer>());
+				winsAfterRound.add(new Vector<Integer>());
+
+				gamesAfterRound.get(i).add(0);
+				winsAfterRound.get(i).add(0);
+			}
 		}
 		
 		for (int i=0; i<results.size(); i++)
 		{
 			GameResult result = results.get(i);
-			
+
 			int b1 = getIndex(result.hostName);
 			int b2 = getIndex(result.awayName);
 			
@@ -129,42 +142,40 @@ public class ResultsParser
 			mapWins[winner][map]++;
 			mapGames[b1][map]++;
 			mapGames[b2][map]++;
-						
-			// update win percentage arrays
-			if (result.roundID >= gamesAfterRound.get(b1).size())
+
+			if(perRoundAnalysis)
 			{
-				gamesAfterRound.get(b1).add(gamesAfterRound.get(b1).lastElement() + 1);
+				// update win percentage arrays
+				if (result.roundID >= gamesAfterRound.get(b1).size()) {
+					gamesAfterRound.get(b1).add(gamesAfterRound.get(b1).lastElement() + 1);
+				} else {
+					gamesAfterRound.get(b1).set(result.roundID, gamesAfterRound.get(b1).get(result.roundID) + 1);
+				}
+
+				// if it's a new round, add it to the end of the vector
+				if (result.roundID >= gamesAfterRound.get(b2).size()) {
+					gamesAfterRound.get(b2).add(gamesAfterRound.get(b2).lastElement() + 1);
+				}
+				// otherwise just add 1 to the back
+				else {
+					gamesAfterRound.get(b2).set(result.roundID, gamesAfterRound.get(b2).get(result.roundID) + 1);
+				}
+
+				while (result.roundID >= winsAfterRound.get(b1).size()) {
+					winsAfterRound.get(b1).add(winsAfterRound.get(b1).lastElement());
+				}
+
+				while (result.roundID >= winsAfterRound.get(b2).size()) {
+					winsAfterRound.get(b2).add(winsAfterRound.get(b2).lastElement());
+				}
+
+				winsAfterRound.get(winner).set(result.roundID, winsAfterRound.get(winner).get(result.roundID) + 1);
 			}
-			else
-			{
-				gamesAfterRound.get(b1).set(result.roundID, gamesAfterRound.get(b1).get(result.roundID) + 1);
-			}
-			
-			// if it's a new round, add it to the end of the vector
-			if (result.roundID >= gamesAfterRound.get(b2).size())
-			{
-				gamesAfterRound.get(b2).add(gamesAfterRound.get(b2).lastElement() + 1);
-			}
-			// otherwise just add 1 to the back
-			else
-			{
-				gamesAfterRound.get(b2).set(result.roundID, gamesAfterRound.get(b2).get(result.roundID) + 1);
-			}
-			
-			while (result.roundID >= winsAfterRound.get(b1).size())
-			{
-				winsAfterRound.get(b1).add(winsAfterRound.get(b1).lastElement());		
-			}
-			
-			while (result.roundID >= winsAfterRound.get(b2).size())
-			{
-				winsAfterRound.get(b2).add(winsAfterRound.get(b2).lastElement());		
-			}
-			
-			winsAfterRound.get(winner).set(result.roundID, winsAfterRound.get(winner).get(result.roundID) + 1);	
 		}
-		
-		printWinPercentageGraph();
+		if(perRoundAnalysis)
+		{
+			printWinPercentageGraph();
+		}
 	}
 	
 	public String getRawDataHTML()

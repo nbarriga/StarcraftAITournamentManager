@@ -42,8 +42,12 @@ public class ServerSettings
 	{
         return INSTANCE;
     }
-	
+
 	public void parseSettingsFile(String filename)
+	{
+		parseSettingsFile(filename, true);
+	}
+	public void parseSettingsFile(String filename, boolean checkDirectories)
 	{
 		try
 		{
@@ -81,7 +85,7 @@ public class ServerSettings
 			System.exit(-1);
 		}
 		
-		if (!checkValidSettings())
+		if (checkDirectories && !checkValidSettings())
 		{
 			System.err.println("\n\nError in server set-up, please check documentation: http://webdocs.cs.ualberta.ca/~cdavid/starcraftaicomp/tm.shtml#ss");
 			System.exit(0);
